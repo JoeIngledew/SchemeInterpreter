@@ -373,23 +373,23 @@ eval env (List (Atom "lambda" : DottedList params varargs : body)) =
     makeVarArgs varargs env params body
 eval env (List (Atom "lambda" : varargs@(Atom _) : body)) =
     makeVarArgs varargs env [] body
+eval env (List [Atom "load", String filename]) = 
+    load filename >>= liftM last . mapM (eval env)
 eval env (List (function : args)) = do
     func <- eval env function
     argVals <- mapM (eval env) args
     apply func argVals
-eval env (List [Atom "load", String filename]) =
-    load filename >>= liftM last . mapM (eval env)
 eval env badForm = throwError $ BadSpecialForm "Unrecognised special form" badForm
-
-readOrThrow :: Parser a -> String -> ThrowsError a
-readOrThrow parser input = case parse parser "lisp" input of
-    Left err -> throwError $ Parser err
-    Right val -> return val
 
 --readExpr :: String -> ThrowsError LispVal
 --readExpr input = case parse parseExpr "lisp" input of
 --     Left err -> throwError $ Parser err
 --     Right val -> return val
+
+readOrThrow :: Parser a -> String -> ThrowsError a
+readOrThrow parser input = case parse parser "lisp" input of
+    Left err  -> throwError $ Parser err
+    Right val -> return val
 
 readExpr = readOrThrow parseExpr
 readExprList = readOrThrow (endBy parseExpr spaces)
